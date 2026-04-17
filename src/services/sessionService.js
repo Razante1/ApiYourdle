@@ -11,14 +11,11 @@ export class SessionService {
     const start = Date.now()
 
     const llmResponse = await this.llm.generateGameData(theme)
+    
 
     const end = Date.now()
     const responseTime = end - start
 
-    // Validação básica
-    if (!llmResponse.items || !llmResponse.secret) {
-      throw new Error("Invalid LLM response")
-    }
 
     const { data, error } = await supabase
       .from('sessions')
@@ -32,6 +29,8 @@ export class SessionService {
 
     if (error) throw error
 
-    return data
+    // Garante `llm_response` na resposta HTTP: `res.json` omite chaves com valor
+    // `undefined` (comum se o registro do Supabase não trouxer a coluna como esperado).
+    return { ...data, llm_response: llmResponse }
   }
 }
